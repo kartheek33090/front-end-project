@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Online Course Management System — Project & Code</title>
+  <style>
+    :root{--bg:#f6f8fb;--card:#ffffff;--accent:#0b6ef6;--muted:#6b7280}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:0; background:var(--bg); color:#0f172a}
+    header{background:linear-gradient(90deg,#062f4f,#0b3f6b); color:#fff; padding:28px 20px}
+    h1{margin:0;font-size:20px}
+    .container{max-width:980px;margin:20px auto;padding:0 16px}
+    .card{background:var(--card);border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 8px 24px rgba(15,23,42,0.06)}
+    pre{background:#0b1220;color:#e6eef8;padding:12px;border-radius:8px;overflow:auto}
+    code{font-family:monospace;font-size:13px}
+    nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+    a.btn{background:var(--accent);color:#fff;padding:8px 10px;border-radius:8px;text-decoration:none}
+    .muted{color:var(--muted)}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:800px){.two-col{grid-template-columns:1fr}}
+    table{width:100%;border-collapse:collapse}
+    td,th{padding:8px;border-bottom:1px solid #eef2f7}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Online Course Management System</h1>
+      <p class="muted">Complete project description + starter full-stack code snippets (HTML single-file view). Ask to generate files/zip when ready.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Project Overview</h2>
+      <p>This Online Course Management System (OCMS) is an educational platform to create and manage courses, enroll students, deliver lessons and assignments, track progress, and support discussion. It targets schools, colleges, training centers and independent instructors.</p>
+      <nav>
+        <a class="btn" href="#features">Features</a>
+        <a class="btn" href="#architecture">Architecture</a>
+        <a class="btn" href="#data-model">Data Model</a>
+        <a class="btn" href="#api">API</a>
+        <a class="btn" href="#code">Code Snippets</a>
+      </nav>
+    </section>
+
+    <section id="features" class="card">
+      <h2>Key Features</h2>
+      <ul>
+        <li>User authentication & role-based access (Admin, Instructor, Student)</li>
+        <li>Course CRUD: create courses, add description, syllabus, tags</li>
+        <li>Lessons (video/file/text), assignments, quizzes (basic)</li>
+        <li>Enrollment management (self-enroll or invite)</li>
+        <li>Gradebook, progress tracking, and activity feed</li>
+        <li>Discussion/comments per course/lesson</li>
+        <li>File uploads for lessons & assignments (S3 in prod)</li>
+      </ul>
+    </section>
+
+    <section id="architecture" class="card">
+      <h2>High-Level Architecture</h2>
+      <div class="two-col">
+        <div>
+          <h3>Frontend</h3>
+          <p>React (Vite) or simple server-rendered HTML + JS. Use MUI or Bootstrap. Axios for API calls.</p>
+        </div>
+        <div>
+          <h3>Backend</h3>
+          <p>Node.js + Express, MongoDB with Mongoose, JWT for auth, multer for uploads. Use S3 for production storage.</p>
+        </div>
+      </div>
+      <p class="muted">Real-time chat or notifications via Socket.IO; host backend on Render/Heroku; frontend on Vercel/Netlify; database on MongoDB Atlas.</p>
+    </section>
+
+    <section id="data-model" class="card">
+      <h2>Data Model</h2>
+      <table>
+        <thead><tr><th>Entity</th><th>Key Fields</th></tr></thead>
+        <tbody>
+          <tr><td><strong>User</strong></td><td>_id, name, email, passwordHash, role (admin/instructor/student), bio, createdAt</td></tr>
+          <tr><td><strong>Course</strong></td><td>_id, title, description, instructor (User ref), tags[], visibility, lessons[], createdAt</td></tr>
+          <tr><td><strong>Lesson</strong></td><td>_id, courseRef, title, content (text), resources [file refs], order, createdAt</td></tr>
+          <tr><td><strong>Assignment</strong></td><td>_id, courseRef, title, description, dueDate, attachments[], maxMarks</td></tr>
+          <tr><td><strong>Enrollment</strong></td><td>_id, courseRef, studentRef, enrolledAt, role (student/auditor), progress</td></tr>
+          <tr><td><strong>Submission</strong></td><td>_id, assignmentRef, studentRef, files[], marks, feedback, submittedAt</td></tr>
+          <tr><td><strong>Comment</strong></td><td>_id, targetType (course/lesson/assignment), targetId, author, text, createdAt</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="api" class="card">
+      <h2>Selected API Endpoints</h2>
+      <ul>
+        <li>POST /api/auth/register — register</li>
+        <li>POST /api/auth/login — login (returns JWT)</li>
+        <li>GET /api/users/me — current user</li>
+        <li>POST /api/courses — create course (instructor)</li>
+        <li>GET /api/courses — list/filter courses</li>
+        <li>GET /api/courses/:id — course detail</li>
+        <li>POST /api/courses/:id/enroll — enroll user</li>
+        <li>POST /api/courses/:id/lessons — add lesson</li>
+        <li>POST /api/courses/:id/assignments — add assignment</li>
+        <li>POST /api/assignments/:id/submit — student submission</li>
+      </ul>
+    </section>
+
+    <section id="code" class="card">
+      <h2>Starter Code — Backend (Node.js + Express + Mongoose)</h2>
+
+      <h3>1) package.json</h3>
+      <pre><code>{
+  "name": "ocms-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {"start":"node server.js","dev":"nodemon server.js"},
+  "dependencies": {
+    "bcrypt":"^5.1.0",
+    "cors":"^2.8.5",
+    "dotenv":"^16.0.0",
+    "express":"^4.18.2",
+    "jsonwebtoken":"^9.0.0",
+    "mongoose":"^7.0.0",
+    "multer":"^1.4.5"
+  },
+  "devDependencies": {"nodemon":"^2.0.22"}
+}
+</code></pre>
+
+      <h3>2) server.js</h3>
+      <pre><code>// server.js
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+
+// Routes
+const authRoutes = require('./routes/auth');
+const courseRoutes = require('./routes/courses');
+const assignmentRoutes = require('./routes/assignments');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/assignments', assignmentRoutes);
+
+mongoose.connect(process.env.MONGO_URI).then(()=>{
+  console.log('Mongo connected');
+  app.listen(process.env.PORT||5000, ()=>console.log('Server listening'));
+}).catch(e=>console.error(e));
+</code></pre>
+
+      <h3>3) models/User.js</h3>
+      <pre><code>const mongoose = require('mongoose');
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: {type:String, unique:true},
+  passwordHash: String,
+  role: {type:String, enum:['admin','instructor','student'], default:'student'},
+  bio: String
+}, {timestamps:true});
+module.exports = mongoose.model('User', userSchema);
+</code></pre>
+
+      <h3>4) models/Course.js</h3>
+      <pre><code>const mongoose = require('mongoose');
+const courseSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  instructor: {type:mongoose.Schema.Types.ObjectId, ref:'User'},
+  tags: [String],
+  visibility: {type:String, enum:['public','private'], default:'public'},
+  lessons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }]
+}, {timestamps:true});
+module.exports = mongoose.model('Course', courseSchema);
+</code></pre>
+
+      <h3>5) models/Lesson.js</h3>
+      <pre><code>const mongoose = require('mongoose');
+const lessonSchema = new mongoose.Schema({
+  course: {type:mongoose.Schema.Types.ObjectId, ref:'Course'},
+  title: String,
+  content: String, // markdown or HTML
+  resources: [String], // file URLs
+  order: Number
+}, {timestamps:true});
+module.exports = mongoose.model('Lesson', lessonSchema);
+</code></pre>
+
+      <h3>6) models/Assignment.js</h3>
+      <pre><code>const mongoose = require('mongoose');
+const assignmentSchema = new mongoose.Schema({
+  course: {type:mongoose.Schema.Types.ObjectId, ref:'Course'},
+  title: String,
+  description: String,
+  dueDate: Date,
+  maxMarks: Number,
+  attachments: [String]
+}, {timestamps:true});
+module.exports = mongoose.model('Assignment', assignmentSchema);
+</code></pre>
+
+      <h3>7) routes/auth.js</h3>
+      <pre><code>const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+
+router.post('/register', async (req,res)=>{
+  try{
+    const {name,email,password,role} = req.body;
+    if(await User.findOne({email})) return res.status(400).json({message:'Email exists'});
+    const hash = await bcrypt.hash(password,10);
+    const user = new User({name,email,passwordHash:hash,role});
+    await user.save();
+    res.json({message:'registered'});
+  }catch(e){res.status(500).json({error:e.message})}
+});
+
+router.post('/login', async (req,res)=>{
+  try{
+    const {email,password} = req.body;
+    const user = await User.findOne({email});
+    if(!user) return res.status(400).json({message:'Invalid'});
+    const ok = await bcrypt.compare(password,user.passwordHash);
+    if(!ok) return res.status(400).json({message:'Invalid'});
+    const token = jwt.sign({id:user._id,role:user.role}, process.env.JWT_SECRET, {expiresIn:'8h'});
+    res.json({token,user:{id:user._id,name:user.name,email:user.email,role:user.role}});
+  }catch(e){res.status(500).json({error:e.message})}
+});
+
+module.exports = router;
+</code></pre>
+
+      <h3>8) routes/courses.js (basic)</h3>
+      <pre><code>const express = require('express');
+const router = express.Router();
+const Course = require('../models/Course');
+const Lesson = require('../models/Lesson');
+const auth = require('../middleware/auth');
+
+// Create course (instructor only)
+router.post('/', auth, async (req,res)=>{
+  if(req.user.role !== 'instructor' && req.user.role !== 'admin') return res.status(403).json({message:'Not allowed'});
+  const {title,description,tags,visibility} = req.body;
+  const course = new Course({title,description,tags,visibility,instructor:req.user.id});
+  await course.save();
+  res.json(course);
+});
+
+// List courses
+router.get('/', async (req,res)=>{
+  const q = {};
+  const list = await Course.find(q).populate('instructor','name email');
+  res.json(list);
+});
+
+// Add lesson
+router.post('/:id/lessons', auth, async (req,res)=>{
+  const course = await Course.findById(req.params.id);
+  if(!course) return res.status(404).json({message:'Not found'});
+  if(String(course.instructor) !== req.user.id && req.user.role!=='admin') return res.status(403).json({message:'Not allowed'});
+  const lesson = new Lesson({course:course._id, title:req.body.title, content:req.body.content});
+  await lesson.save();
+  course.lessons.push(lesson._id);
+  await course.save();
+  res.json(lesson);
+});
+
+module.exports = router;
+</code></pre>
+
+      <h3>9) middleware/auth.js</h3>
+      <pre><code>const jwt = require('jsonwebtoken');
+module.exports = (req,res,next)=>{
+  const auth = req.headers.authorization;
+  if(!auth) return res.status(401).json({message:'No auth'});
+  const token = auth.split(' ')[1];
+  try{
+    const p = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = p; next();
+  }catch(e){res.status(401).json({message:'Invalid token'})}
+}
+</code></pre>
+
+      <h3>10) uploads (multer) & assignment submit route (snippet)</h3>
+      <pre><code>const multer = require('multer');
+const storage = multer.diskStorage({destination:(req,file,cb)=>cb(null,'uploads/'),filename:(req,file,cb)=>cb(null,Date.now()+ '-' + file.originalname)});
+const upload = multer({storage});
+
+// student submits assignment
+router.post('/assignments/:id/submit', auth, upload.array('files',5), async (req,res)=>{
+  // save submission record with file paths req.files.map(f=>'/uploads/'+f.filename)
+});
+</code></pre>
+
+      <p class="muted">This backend is a minimal starting point; add validation, error handling, rate limiting, and tests. Replace local storage with S3 for production and enable HTTPS.</p>
+    </section>
+
+    <section class="card">
+      <h2>Starter Frontend — Simple HTML + JS (no build tool)</h2>
+      <p>Below is a minimal single-page HTML that uses Fetch to register/login and list courses. For a production UI, use React or Vue.</p>
+
+      <pre><code>&lt;!-- public/index.html --&gt;
+&lt;!doctype html&gt;
+&lt;html&gt;
+&lt;head&gt;&lt;meta charset="utf-8"/&gt;&lt;meta name="viewport" content="width=device-width,initial-scale=1"/&gt;&lt;title&gt;OCMS&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+  &lt;h2&gt;OCMS Demo&lt;/h2&gt;
+  &lt;div&gt;
+    &lt;input id="email" placeholder="email"/&gt;
+    &lt;input id="pass" placeholder="password" type="password"/&gt;
+    &lt;button id="login"&gt;Login&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div id="courses"&gt;Courses will load here&lt;/div&gt;
+
+&lt;script&gt;
+document.getElementById('login').onclick = async ()=>{
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('pass').value;
+  const res = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+  const data = await res.json();
+  if(data.token){localStorage.setItem('token',data.token); alert('Logged in'); loadCourses();} else alert('Login failed');
+}
+async function loadCourses(){
+  const token = localStorage.getItem('token');
+  const res = await fetch('/api/courses',{headers:{Authorization:'Bearer '+token}});
+  const list = await res.json();
+  document.getElementById('courses').innerText = JSON.stringify(list,null,2);
+}
+loadCourses();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+      <p class="muted">This is intentionally minimal; swap to a modern frontend framework for a better UX.</p>
+    </section>
+
+    <section class="card">
+      <h2>Security & Production Considerations</h2>
+      <ul>
+        <li>Hash passwords with bcrypt and use strong JWT secrets with expiration & refresh tokens.</li>
+        <li>Validate/sanitize input and restrict file types & size on upload.</li>
+        <li>Use HTTPS; store files in S3 with signed URLs for access control.</li>
+        <li>Enable rate limiting and logging (e.g., winston).</li>
+        <li>Implement backups and monitoring; add unit/integration tests.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Deployment & Docker</h2>
+      <pre><code># Dockerfile (backend)
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+EXPOSE 5000
+CMD ["node","server.js"]
+</code></pre>
+      <p class="muted">Use docker-compose to run MongoDB in dev and configure environment variables for production.</p>
+    </section>
+
+    <section class="card">
+      <h2>Next Steps</h2>
+      <ol>
+        <li>Tell me if you want a downloadable ZIP with full file structure (backend + frontend).</li>
+        <li>I can generate a React+MUI frontend or a full Express repo with all routes, tests, and sample data.</li>
+        <li>If you want any feature expanded (quizzes, grading rubrics, analytics), say which one.</li>
+      </ol>
+    </section>
+
+    <footer style="text-align:center;margin:20px 0;color:var(--muted)">Generated HTML preview — modify and use as starter documentation.</footer>
+  </main>
+</body>
+</html>
