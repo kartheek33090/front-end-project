@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Online Course Manager</title>
+  <style>
+    :root{
+      --accent:#3b82f6;
+      --muted:#6b7280;
+      --card-border:#e5e7eb;
+      --danger:#ef4444;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{
+      margin:0;
+      padding:24px;
+      background:linear-gradient(180deg,#fbfdff 0%, #f7f9fc 100%);
+      color:#111827;
+      min-height:100vh;
+    }
+    .container{
+      max-width:900px;
+      margin:0 auto;
+    }
+    header{
+      text-align:center;
+      margin-bottom:18px;
+    }
+    h1{ margin:0; color:var(--accent); font-size:28px;}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:18px;
+    }
+    @media(min-width:900px){
+      .grid{ grid-template-columns: 360px 1fr; align-items:start; }
+    }
+    .card{
+      background:white;
+      border:1px solid var(--card-border);
+      border-radius:12px;
+      padding:16px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+    }
+
+    label{ display:block; font-weight:600; margin-bottom:6px; color:#111827; font-size:14px; }
+    input[type="text"], textarea, input[type="date"], input[type="number"]{
+      width:100%; padding:10px 12px; border-radius:8px; border:1px solid #e6e9ee; outline:none;
+      font-size:14px; box-sizing:border-box;
+    }
+    textarea{ min-height:90px; resize:vertical; }
+    .row{ display:flex; gap:8px; }
+    .btn{
+      display:inline-block; padding:10px 14px; border-radius:10px; background:var(--accent); color:white; border:none;
+      cursor:pointer; font-weight:600;
+    }
+    .btn.ghost{ background:transparent; color:var(--accent); border:1px solid var(--accent); }
+    .btn.danger{ background:var(--danger); }
+    .courses-list{ list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+    .course{
+      padding:12px; border-radius:10px; border:1px solid var(--card-border); background:#fff; display:flex; justify-content:space-between; gap:12px; align-items:flex-start;
+    }
+    .course .meta{ flex:1; }
+    .course h3{ margin:0 0 6px 0; font-size:16px; }
+    .meta small{ color:var(--muted); display:block; margin-bottom:8px; }
+    .course .actions{ display:flex; flex-direction:column; gap:8px; }
+    .empty{ text-align:center; color:var(--muted); padding:18px; }
+    .muted{ color:var(--muted); font-size:13px; }
+    .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .search{ padding:8px 10px; border-radius:8px; border:1px solid #e6e9ee; }
+    footer{ margin-top:18px; text-align:center; color:var(--muted); font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎓 Online Course Manager</h1>
+      <p class="muted">Add, view and delete courses — works offline (stored in your browser).</p>
+    </header>
+
+    <div class="grid">
+      <!-- Left panel: Form -->
+      <div class="card" aria-labelledby="add-course-title">
+        <h2 id="add-course-title" style="margin-top:0;">Add / Edit Course</h2>
+
+        <div style="display:grid; gap:10px;">
+          <div>
+            <label for="title">Course Title <span style="color:var(--danger)">*</span></label>
+            <input id="title" type="text" placeholder="e.g. Intro to Algorithms" />
+          </div>
+
+          <div>
+            <label for="instructor">Instructor <span style="color:var(--danger)">*</span></label>
+            <input id="instructor" type="text" placeholder="e.g. Dr. A" />
+          </div>
+
+          <div>
+            <label for="startDate">Start Date</label>
+            <input id="startDate" type="date" />
+          </div>
+
+          <div>
+            <label for="duration">Duration (weeks)</label>
+            <input id="duration" type="number" min="0" placeholder="e.g. 8" />
+          </div>
+
+          <div>
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="Short description"></textarea>
+          </div>
+
+          <div class="row">
+            <button id="saveBtn" class="btn">Add Course</button>
+            <button id="clearBtn" class="btn ghost">Clear</button>
+          </div>
+
+          <div class="muted" id="formNote">Required: Title & Instructor.</div>
+        </div>
+      </div>
+
+      <!-- Right panel: List + controls -->
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Available Courses</h2>
+            <div class="controls">
+              <input id="search" class="search" placeholder="Search by title or instructor" />
+              <button id="clearAll" class="btn ghost">Clear All</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <ul id="coursesList" class="courses-list" aria-live="polite"></ul>
+          <div id="emptyState" class="empty" style="display:none;">No courses yet — add one on the left.</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <small>Save this file and open in your browser. To push to GitHub, create a repo and upload this file.</small>
+    </footer>
+  </div>
+
+  <script>
+    // Simple Course Manager using localStorage
+    const STORAGE_KEY = 'ocm_courses_v1';
+
+    // Elements
+    const titleEl = document.getElementById('title');
+    const instructorEl = document.getElementById('instructor');
+    const startDateEl = document.getElementById('startDate');
+    const durationEl = document.getElementById('duration');
+    const descEl = document.getElementById('description');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const coursesListEl = document.getElementById('coursesList');
+    const emptyStateEl = document.getElementById('emptyState');
+    const searchEl = document.getElementById('search');
+    const clearAllBtn = document.getElementById('clearAll');
+    const formNote = document.getElementById('formNote');
+
+    let courses = [];
+    let editId = null;
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        courses = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        courses = [];
+      }
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
+    }
+
+    function render(filter = '') {
+      const q = filter.trim().toLowerCase();
+      const visible = courses.filter(c => {
+        if (!q) return true;
+        return (c.title + ' ' + (c.instructor||'') + ' ' + (c.description||'')).toLowerCase().includes(q);
+      });
+
+      coursesListEl.innerHTML = '';
+      if (visible.length === 0) {
+        emptyStateEl.style.display = 'block';
+        return;
+      } else {
+        emptyStateEl.style.display = 'none';
+      }
+
+      visible.forEach(course => {
+        const li = document.createElement('li');
+        li.className = 'course';
+        li.innerHTML = `
+          <div class="meta">
+            <h3>${escapeHtml(course.title)}</h3>
+            <small>Instructor: ${escapeHtml(course.instructor)} ${course.startDate ? ' • Starts: ' + escapeHtml(course.startDate) : ''}${course.durationWeeks ? ' • ' + course.durationWeeks + ' wk(s)' : ''}</small>
+            <div>${escapeHtml(course.description || '')}</div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" data-action="edit" data-id="${course.id}">Edit</button>
+            <button class="btn danger" data-action="delete" data-id="${course.id}">Delete</button>
+          </div>
+        `;
+        coursesListEl.appendChild(li);
+      });
+    }
+
+    function resetForm() {
+      editId = null;
+      titleEl.value = '';
+      instructorEl.value = '';
+      startDateEl.value = '';
+      durationEl.value = '';
+      descEl.value = '';
+      saveBtn.textContent = 'Add Course';
+      formNote.textContent = 'Required: Title & Instructor.';
+    }
+
+    function populateForm(course) {
+      editId = course.id;
+      titleEl.value = course.title;
+      instructorEl.value = course.instructor;
+      startDateEl.value = course.startDate || '';
+      durationEl.value = course.durationWeeks || '';
+      descEl.value = course.description || '';
+      saveBtn.textContent = 'Save Changes';
+      formNote.textContent = 'Editing — click Save Changes to update.';
+    }
+
+    function addOrUpdate() {
+      const title = titleEl.value.trim();
+      const instructor = instructorEl.value.trim();
+
+      if (!title || !instructor) {
+        alert('Please provide both Title and Instructor.');
+        return;
+      }
+
+      const courseObj = {
+        id: editId || Date.now().toString(),
+        title,
+        instructor,
+        startDate: startDateEl.value || null,
+        durationWeeks: durationEl.value ? Number(durationEl.value) : null,
+        description: descEl.value.trim() || null,
+      };
+
+      if (editId) {
+        const idx = courses.findIndex(c => c.id === editId);
+        if (idx !== -1) courses[idx] = courseObj;
+      } else {
+        courses.unshift(courseObj); // newest first
+      }
+
+      save();
+      render(searchEl.value);
+      resetForm();
+    }
+
+    function handleListClick(e) {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if (action === 'delete') {
+        if (!confirm('Delete this course?')) return;
+        courses = courses.filter(c => c.id !== id);
+        save();
+        render(searchEl.value);
+      } else if (action === 'edit') {
+        const course = courses.find(c => c.id === id);
+        if (course) populateForm(course);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function clearAll() {
+      if (!confirm('Clear ALL courses? This cannot be undone.')) return;
+      courses = [];
+      save();
+      render();
+      resetForm();
+    }
+
+    // small helper to avoid XSS when injecting text
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;')
+        .replaceAll('\n', '<br/>');
+    }
+
+    // initialize
+    load();
+    render();
+
+    // events
+    saveBtn.addEventListener('click', addOrUpdate);
+    clearBtn.addEventListener('click', resetForm);
+    coursesListEl.addEventListener('click', handleListClick);
+    searchEl.addEventListener('input', (e) => render(e.target.value));
+    clearAllBtn.addEventListener('click', clearAll);
+
+    // quick keyboard submit (Ctrl+Enter)
+    [titleEl, instructorEl, descEl].forEach(el => {
+      el.addEventListener('keydown', (ev) => {
+        if (ev.ctrlKey && ev.key === 'Enter') addOrUpdate();
+      });
+    });
+  </script>
+</body>
+</html>
